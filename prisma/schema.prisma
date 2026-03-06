@@ -1,0 +1,102 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+datasource db {
+  provider = "sqlite" 
+} 
+model Tag {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+
+  entries   EntryTag[]
+  projects  ProjectTag[]
+  resources ResourceTag[]
+}
+
+model Entry {
+  id        String     @id @default(cuid())
+  title     String
+  date      DateTime
+  body      String
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  tags      EntryTag[]
+  projects  ProjectEntry[]
+  resources Resource[]
+}
+
+model EntryTag {
+  entry   Entry  @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  entryId String
+  tag     Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  tagId   String
+
+  @@id([entryId, tagId])
+}
+
+model Project {
+  id          String        @id @default(cuid())
+  name        String
+  description String
+  status      String        @default("Idea")
+  liveUrl     String?
+  repoUrl     String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  tags        ProjectTag[]
+  entries     ProjectEntry[]
+  resources   Resource[]
+}
+
+model ProjectTag {
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String
+  tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  tagId     String
+
+  @@id([projectId, tagId])
+}
+
+model ProjectEntry {
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String
+  entry     Entry   @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  entryId   String
+
+  @@id([projectId, entryId])
+}
+
+model Resource {
+  id         String   @id @default(cuid())
+  url        String
+  title      String
+  category   String
+  notes      String?
+  isRead     Boolean  @default(false)
+  isFavourite Boolean @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  entryId   String?
+  entry     Entry?   @relation(fields: [entryId], references: [id], onDelete: SetNull)
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  tags      ResourceTag[]
+}
+
+model ResourceTag {
+  resource   Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  resourceId String
+  tag        Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  tagId      String
+
+  @@id([resourceId, tagId])
+}
