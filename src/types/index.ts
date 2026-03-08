@@ -18,10 +18,10 @@ export interface Tag {
 export interface Entry {
   id: string;
   title: string; 
-  date: Date; 
+  date: string; 
   body: string; 
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
   tags: Tag[]; 
   projects?: Project[];
   resources?: Resource[];
@@ -34,8 +34,8 @@ export interface Project {
   status: ProjectStatus;
   liveUrl?: string | null;
   repoUrl?: string | null;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
   tags: Tag[];
   entries?: Entry[];
   resources?: Resource[];
@@ -49,8 +49,8 @@ export interface Resource {
   notes?: string | null;
   isRead: boolean;
   isFavourite: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
   entryId?: string | null;
   projectId?: string | null;
   entry?: Entry | null;
