@@ -18,7 +18,7 @@ export async function GET() {
     });
 
     const currentStreak = calculateStreak(
-      entryDates.map((e) => e.date)
+      entryDates.map((e) => e.date.toISOString())
     );
 
     // WEEKLY ACTIVITY — last 8 weeks
@@ -31,7 +31,7 @@ export async function GET() {
     });
 
     const weeklyActivity = buildWeeklyActivity(
-      recentEntries.map((e) => e.date)
+      recentEntries.map((e) => e.date.toISOString())
     );
 
     // TOP TAGS — across all entries
