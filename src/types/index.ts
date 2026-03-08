@@ -17,12 +17,12 @@ export interface Tag {
 
 export interface Entry {
   id: string;
-  title: string;
-  date: Date;
-  body: string;
+  title: string; 
+  date: Date; 
+  body: string; 
   createdAt: Date;
   updatedAt: Date;
-  tags: Tag[];
+  tags: Tag[]; 
   projects?: Project[];
   resources?: Resource[];
 }
