@@ -5,8 +5,8 @@ import { z } from "zod";
 export const TagSchema = z.object({
   name: z
     .string()
-    .min(1, "Tag name is required")
-    .max(30, "Tag name must be under 30 characters")
+    .min(1, { message: "Tag name is required" })
+    .max(30, { message: "Tag name must be under 30 characters" })
     .trim(),
 });
 
@@ -15,25 +15,23 @@ export const TagSchema = z.object({
 export const CreateEntrySchema = z.object({
   title: z
     .string()
-    .min(1, "Title is required")
-    .max(100, "Title must be under 100 characters")
+    .min(1, { message: "Title is required" })
+    .max(100, { message: "Title must be under 100 characters" })
     .trim(),
   date: z
     .string()
-    .min(1, "Date is required"),
+    .min(1, { message: "Date is required" }),
   body: z
     .string()
-    .min(1, "Body is required"),
+    .min(1, { message: "Body is required" }),
   tags: z
-    .array(z.string().min(1))
-    .default([]),
+    .array(z.string()).min(0),
   projectIds: z
-    .array(z.string())
-    .default([]),
+    .array(z.string()).min(0),
 });
 
 export const UpdateEntrySchema = CreateEntrySchema.partial().extend({
-  id: z.string().min(1, "Entry ID is required"),
+  id: z.string().min(1, { message: "Entry ID is required" }),
 });
 
 // PROJECT SCHEMAS
@@ -41,33 +39,32 @@ export const UpdateEntrySchema = CreateEntrySchema.partial().extend({
 export const CreateProjectSchema = z.object({
   name: z
     .string()
-    .min(1, "Project name is required")
-    .max(100, "Name must be under 100 characters")
+    .min(1, { message: "Project name is required" })
+    .max(100, { message: "Name must be under 100 characters" })
     .trim(),
   description: z
     .string()
-    .min(1, "Description is required")
+    .min(1, { message: "Description is required" })
     .trim(),
   status: z.enum(["Idea", "Building", "Shipped", "Paused"], {
     message: "Invalid status value",
   }),
   liveUrl: z
     .string()
-    .url("Must be a valid URL")
+    .url({ message: "Must be a valid URL" })
     .optional()
     .or(z.literal("")),
   repoUrl: z
     .string()
-    .url("Must be a valid URL")
+    .url({ message: "Must be a valid URL" })
     .optional()
     .or(z.literal("")),
   tags: z
-    .array(z.string().min(1))
-    .default([]),
+    .array(z.string().min(1)),
 });
 
 export const UpdateProjectSchema = CreateProjectSchema.partial().extend({
-  id: z.string().min(1, "Project ID is required"),
+  id: z.string().min(1, { message: "Project ID is required" }),
 });
 
 // RESOURCE SCHEMAS
@@ -75,11 +72,11 @@ export const UpdateProjectSchema = CreateProjectSchema.partial().extend({
 export const CreateResourceSchema = z.object({
   url: z
     .string()
-    .url("Must be a valid URL"),
+    .url({ message: "Must be a valid URL" }),
   title: z
     .string()
-    .min(1, "Title is required")
-    .max(100, "Title must be under 100 characters")
+    .min(1, { message: "Title is required" })
+    .max(100, { message: "Title must be under 100 characters" })
     .trim(),
   category: z.enum(["Article", "Video", "Docs", "Course", "Other"], {
     message: "Invalid category value",
@@ -88,8 +85,7 @@ export const CreateResourceSchema = z.object({
     .string()
     .optional(),
   tags: z
-    .array(z.string().min(1))
-    .default([]),
+    .array(z.string().min(1)),
   entryId: z
     .string()
     .optional(),
@@ -99,7 +95,7 @@ export const CreateResourceSchema = z.object({
 });
 
 export const UpdateResourceSchema = CreateResourceSchema.partial().extend({
-  id: z.string().min(1, "Resource ID is required"),
+  id: z.string().min(1, { message: "Resource ID is required" }),
 });
 
 export const ToggleResourceSchema = z.object({
