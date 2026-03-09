@@ -2,21 +2,32 @@
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import axios from "axios";
 import { CreateResourceSchema, CreateResourceInput } from "@/lib/validations";
-import { Resource } from "@/types";
+import { Resource, Project, Entry } from "@/types";
 import TagInput from "@/components/ui/TagInput";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2 } from "lucide-react";
+import { Loader2, Plus, X } from "lucide-react";
+import { useState } from "react";
+import Modal from "@/components/ui/Modal";
+import { Badge } from "@/components/ui/badge";
+import dynamic from "next/dynamic";
+
+const ProjectForm = dynamic(() => import("@/components/projects/ProjectForm"), {
+  loading: () => <Loader2 className="h-4 w-4 animate-spin mx-auto" />,
+});
+const EntryForm = dynamic(() => import("@/components/entries/EntryForm"), {
+  loading: () => <Loader2 className="h-4 w-4 animate-spin mx-auto" />,
+});
 
 interface ResourceFormProps {
   resource?: Resource;
-  onSuccess: () => void;
+  onSuccess: (data?: Resource) => void;
 }
 
 const CATEGORY_OPTIONS = [
@@ -33,6 +44,9 @@ export default function ResourceForm({
 }: ResourceFormProps) {
   const queryClient = useQueryClient();
   const isEditing = !!resource;
+
+  const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
+  const [isEntryModalOpen, setIsEntryModalOpen] = useState(false);
 
   const {
     register,
@@ -54,16 +68,29 @@ export default function ResourceForm({
   });
 
   const tags = watch("tags");
+  const selectedProjectId = watch("projectId");
+  const selectedEntryId = watch("entryId");
+
+  // Fetch projects and entries
+  const { data: projects = [] } = useQuery<Project[]>({
+    queryKey: ["projects"],
+    queryFn: () => axios.get("/api/projects").then((res) => res.data.data),
+  });
+
+  const { data: entries = [] } = useQuery<Entry[]>({
+    queryKey: ["entries"],
+    queryFn: () => axios.get("/api/entries").then((res) => res.data.data),
+  });
 
   // CREATE mutation
   const createMutation = useMutation({
     mutationFn: (data: CreateResourceInput) =>
       axios.post("/api/resources", data),
-    onSuccess: () => {
+    onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: ["resources"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
       toast.success("Resource saved successfully");
-      onSuccess();
+      onSuccess(res.data.data);
     },
     onError: () => {
       toast.error("Failed to save resource");
@@ -104,7 +131,8 @@ export default function ResourceForm({
   const isPending = createMutation.isPending || updateMutation.isPending;
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+    <>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
 
       {/* URL */}
       <div className="space-y-3">
@@ -159,6 +187,58 @@ export default function ResourceForm({
         </div>
       </div>
 
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* Project Selection */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground font-mono">
+                Related Project
+            </label>
+            <button 
+              type="button"
+              onClick={() => setIsProjectModalOpen(true)}
+              className="text-[10px] font-bold uppercase tracking-widest text-[#a78bfa] hover:opacity-70 transition-all font-mono flex items-center gap-1"
+            >
+              <Plus className="h-3 w-3" /> New Project
+            </button>
+          </div>
+          <select 
+            className="flex h-12 w-full rounded-none border border-border/40 bg-accent/[0.03] px-4 py-2 text-sm text-foreground font-mono focus:outline-none focus:border-border/80 appearance-none"
+            {...register("projectId")}
+          >
+            <option value="" className="bg-background text-foreground">No Project</option>
+            {projects.map(p => (
+              <option key={p.id} value={p.id} className="bg-background text-foreground">{p.name.toUpperCase()}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Entry Selection */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground font-mono">
+                Related Log Entry
+            </label>
+            <button 
+              type="button"
+              onClick={() => setIsEntryModalOpen(true)}
+              className="text-[10px] font-bold uppercase tracking-widest text-[#a78bfa] hover:opacity-70 transition-all font-mono flex items-center gap-1"
+            >
+              <Plus className="h-3 w-3" /> New Entry
+            </button>
+          </div>
+          <select 
+            className="flex h-12 w-full rounded-none border border-border/40 bg-accent/[0.03] px-4 py-2 text-sm text-foreground font-mono focus:outline-none focus:border-border/80 appearance-none"
+            {...register("entryId")}
+          >
+            <option value="" className="bg-background text-foreground">No Entry</option>
+            {entries.map(e => (
+              <option key={e.id} value={e.id} className="bg-background text-foreground">{e.title.toUpperCase()}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
       {/* Notes */}
       <div className="space-y-3">
         <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground font-mono">
@@ -200,6 +280,40 @@ export default function ResourceForm({
         </button>
       </div>
 
-    </form>
+      </form>
+
+      {/* Modals for creation on the fly */}
+      <Modal 
+        isOpen={isProjectModalOpen} 
+        onClose={() => setIsProjectModalOpen(false)}
+        title="Create New Project"
+        description="Add a new project to track your goals"
+      >
+        <ProjectForm 
+          onSuccess={(project) => {
+            setIsProjectModalOpen(false);
+            if (project) {
+              setValue("projectId", project.id);
+            }
+          }} 
+        />
+      </Modal>
+
+      <Modal 
+        isOpen={isEntryModalOpen} 
+        onClose={() => setIsEntryModalOpen(false)}
+        title="New Log Entry"
+        description="Write about what you're doing"
+      >
+        <EntryForm 
+          onSuccess={(entry) => {
+            setIsEntryModalOpen(false);
+            if (entry) {
+              setValue("entryId", entry.id);
+            }
+          }} 
+        />
+      </Modal>
+    </>
   );
 }

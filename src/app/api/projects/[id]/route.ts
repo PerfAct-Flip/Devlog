@@ -76,11 +76,20 @@ export async function PUT(
       );
     }
 
-    const { name, description, status, liveUrl, repoUrl, tags } =
+    const { name, description, status, liveUrl, repoUrl, tags, entryIds, resourceIds } =
       validated.data;
 
     // delete existing tag junctions first
     await db.projectTag.deleteMany({ where: { projectId: id } });
+    
+    // delete existing entry junctions
+    await db.projectEntry.deleteMany({ where: { projectId: id } });
+
+    // reset existing resources
+    await db.resource.updateMany({
+      where: { projectId: id },
+      data: { projectId: null },
+    });
 
     // upsert new tags
     const tagRecords = tags
@@ -108,6 +117,20 @@ export async function PUT(
             tag: { connect: { id: tag.id } },
           })),
         },
+        // Link entries
+        ...(entryIds && {
+          entries: {
+            create: entryIds.map((entryId) => ({
+              entry: { connect: { id: entryId } },
+            })),
+          },
+        }),
+        // Link resources
+        ...(resourceIds && {
+          resources: {
+            connect: resourceIds.map((resId) => ({ id: resId })),
+          },
+        }),
       },
       include: {
         tags: { include: { tag: true } },

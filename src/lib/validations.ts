@@ -28,6 +28,8 @@ export const CreateEntrySchema = z.object({
     .array(z.string()).min(0),
   projectIds: z
     .array(z.string()).min(0),
+  resourceIds: z
+    .array(z.string()).min(0).optional(),
 });
 
 export const UpdateEntrySchema = CreateEntrySchema.partial().extend({
@@ -61,6 +63,10 @@ export const CreateProjectSchema = z.object({
     .or(z.literal("")),
   tags: z
     .array(z.string().min(1)),
+  entryIds: z
+    .array(z.string()).min(0).optional(),
+  resourceIds: z
+    .array(z.string()).min(0).optional(),
 });
 
 export const UpdateProjectSchema = CreateProjectSchema.partial().extend({

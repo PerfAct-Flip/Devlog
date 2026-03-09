@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
   );
     }
 
-    const { title, date, body: entryBody, tags, projectIds } = validated.data;
+    const { title, date, body: entryBody, tags, projectIds, resourceIds } = validated.data;
 
     // upsert tags — create if they don't exist
     const tagRecords = await Promise.all(
@@ -78,6 +78,12 @@ export async function POST(request: NextRequest) {
             project: { connect: { id: projectId } },
           })),
         },
+        // update resources to point to this entry
+        ...(resourceIds && resourceIds.length > 0 && {
+          resources: {
+            connect: resourceIds.map((id) => ({ id })),
+          },
+        }),
       },
       include: {
         tags: { include: { tag: true } },

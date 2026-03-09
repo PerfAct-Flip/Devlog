@@ -65,11 +65,17 @@ export async function PUT(
       );
     }
 
-    const { title, date, body: entryBody, tags, projectIds } = validated.data;
+    const { title, date, body: entryBody, tags, projectIds, resourceIds } = validated.data;
 
     // delete existing junction records first
     await db.entryTag.deleteMany({ where: { entryId: id } });
     await db.projectEntry.deleteMany({ where: { entryId: id } });
+    
+    // reset resources' entryId for this entry
+    await db.resource.updateMany({
+      where: { entryId: id },
+      data: { entryId: null },
+    });
 
     // upsert new tags
     const tagRecords = tags
@@ -100,6 +106,12 @@ export async function PUT(
             project: { connect: { id: projectId } },
           })),
         },
+        // update resources
+        ...(resourceIds && {
+          resources: {
+            connect: resourceIds.map((id) => ({ id })),
+          },
+        }),
       },
       include: {
         tags: { include: { tag: true } },

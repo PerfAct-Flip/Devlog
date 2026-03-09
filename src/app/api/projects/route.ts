@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { name, description, status, liveUrl, repoUrl, tags } =
+    const { name, description, status, liveUrl, repoUrl, tags, entryIds, resourceIds } =
       validated.data;
 
     // upsert tags — create if they don't exist
@@ -69,6 +69,20 @@ export async function POST(request: NextRequest) {
             tag: { connect: { id: tag.id } },
           })),
         },
+        // Link entries
+        ...(entryIds && entryIds.length > 0 && {
+          entries: {
+            create: entryIds.map((entryId) => ({
+              entry: { connect: { id: entryId } },
+            })),
+          },
+        }),
+        // Link resources
+        ...(resourceIds && resourceIds.length > 0 && {
+          resources: {
+            connect: resourceIds.map((id) => ({ id })),
+          },
+        }),
       },
       include: {
         tags: { include: { tag: true } },
